@@ -257,13 +257,15 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
           ? false
           : idx % 2 === 0;
 
-      const mockupW = Math.min(Math.round(preset.width * 0.68), 700);
-      const mockupH = Math.round(mockupW * 2.05);
-      const mockupX = Math.round((preset.width - mockupW) / 2);
-
       const elements: any[] = [];
 
       if (isTextTop) {
+        // Option 1: Headline on top, Mockup on bottom
+        const mockupW = Math.min(Math.round(preset.width * 0.68), 700);
+        const mockupH = Math.round(mockupW * 2.05);
+        const mockupX = Math.round((preset.width - mockupW) / 2);
+        const mockupY = item.subtitle && item.subtitle.trim().length > 0 ? 350 : 290;
+
         // 1. Title on top
         elements.push({
           id: `t-bulk-${idx}-title`,
@@ -272,7 +274,7 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
           x: 80,
           y: 85,
           width: preset.width - 160,
-          height: 160,
+          height: 150,
           rotation: 0,
           opacity: 1,
           visible: true,
@@ -295,7 +297,7 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
             name: "Subtitle Description",
             type: "text",
             x: 90,
-            y: 250,
+            y: 245,
             width: preset.width - 180,
             height: 55,
             rotation: 0,
@@ -320,7 +322,7 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
           name: "Phone Mockup",
           type: "mockup",
           x: mockupX,
-          y: item.subtitle ? 370 : 310,
+          y: mockupY,
           width: mockupW,
           height: mockupH,
           rotation: 0,
@@ -339,13 +341,26 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
           glareEffect: true,
         });
       } else {
-        // Screenshot on top, text on bottom
+        // Option 2: Phone Mockup on top, Headline & Subtitle on bottom
+        // Top margin ensures the phone top, dynamic island, and rounded gold bezel are 100% visible inside canvas
+        const topMargin = Math.round(preset.height * 0.045); // e.g. 85px on 1920
+        const hasSubtitle = !!(item.subtitle && item.subtitle.trim().length > 0);
+
+        // Leave balanced room for text below
+        const bottomTextSpace = hasSubtitle ? 380 : 300;
+        const availableHeight = preset.height - topMargin - bottomTextSpace;
+        const mockupH = Math.min(Math.round(availableHeight), Math.round(preset.height * 0.68));
+        const mockupW = Math.round(mockupH / 2.05);
+        const mockupX = Math.round((preset.width - mockupW) / 2);
+        const mockupY = topMargin;
+
+        // 1. Phone Mockup placed comfortably at top
         elements.push({
           id: `m-bulk-${idx}-mock`,
           name: "Phone Mockup",
           type: "mockup",
           x: mockupX,
-          y: -120,
+          y: mockupY,
           width: mockupW,
           height: mockupH,
           rotation: 0,
@@ -364,20 +379,25 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
           glareEffect: true,
         });
 
+        // 2. Headline Title centered in the lower area below mockup
+        const spaceBelow = preset.height - (mockupY + mockupH);
+        const textBlockHeight = hasSubtitle ? 200 : 120;
+        const titleY = (mockupY + mockupH) + Math.max(Math.round((spaceBelow - textBlockHeight) / 2), 25);
+
         elements.push({
           id: `t-bulk-${idx}-title`,
           name: "Headline",
           type: "text",
           x: 80,
-          y: Math.round(preset.height * 0.74),
+          y: titleY,
           width: preset.width - 160,
-          height: 160,
+          height: 140,
           rotation: 0,
           opacity: 1,
           visible: true,
           locked: false,
           text: item.title || `Key feature #${idx + 1}`,
-          fontSize: 78,
+          fontSize: 76,
           fontFamily: "Outfit",
           fontWeight: "800",
           fontStyle: "normal",
@@ -387,13 +407,14 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
           letterSpacing: -1.5,
         });
 
-        if (item.subtitle && item.subtitle.trim().length > 0) {
+        // 3. Subtitle Description (if present)
+        if (hasSubtitle) {
           elements.push({
             id: `d-bulk-${idx}-desc`,
             name: "Subtitle Description",
             type: "text",
             x: 90,
-            y: Math.round(preset.height * 0.74) + 165,
+            y: titleY + 120,
             width: preset.width - 180,
             height: 55,
             rotation: 0,
@@ -863,13 +884,25 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
                             : "border-slate-600 bg-slate-800"
                         }`}
                       >
-                        <div className="w-full h-4 rounded bg-slate-600" />
-                        <div className="w-full h-0.5 rounded bg-slate-400" />
+                        <div
+                          className={`w-full h-4 rounded ${
+                            layoutChoice === "screenshot-top"
+                              ? "bg-sky-400/30"
+                              : "bg-slate-600"
+                          }`}
+                        />
+                        <div
+                          className={`w-full h-0.5 rounded ${
+                            layoutChoice === "screenshot-top"
+                              ? "bg-sky-400"
+                              : "bg-slate-400"
+                          }`}
+                        />
                       </div>
                     ))}
                   </div>
 
-                  <span className="text-xs font-medium">
+                  <span className="text-xs font-semibold">
                     All: Screenshot top, text bottom
                   </span>
                 </div>
@@ -895,21 +928,75 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
 
                   {/* 3 mini phone icons (Alternating) */}
                   <div className="flex items-center gap-1">
-                    <div className="w-4 h-7 rounded border border-slate-600 bg-slate-800 flex flex-col justify-between p-0.5">
-                      <div className="w-full h-0.5 rounded bg-slate-400" />
-                      <div className="w-full h-4 rounded bg-slate-600" />
+                    <div
+                      className={`w-4 h-7 rounded border flex flex-col justify-between p-0.5 ${
+                        layoutChoice === "alternate"
+                          ? "border-sky-400 bg-sky-500/10"
+                          : "border-slate-600 bg-slate-800"
+                      }`}
+                    >
+                      <div
+                        className={`w-full h-0.5 rounded ${
+                          layoutChoice === "alternate"
+                            ? "bg-sky-400"
+                            : "bg-slate-400"
+                        }`}
+                      />
+                      <div
+                        className={`w-full h-4 rounded ${
+                          layoutChoice === "alternate"
+                            ? "bg-sky-400/30"
+                            : "bg-slate-600"
+                        }`}
+                      />
                     </div>
-                    <div className="w-4 h-7 rounded border border-slate-600 bg-slate-800 flex flex-col justify-between p-0.5">
-                      <div className="w-full h-4 rounded bg-slate-600" />
-                      <div className="w-full h-0.5 rounded bg-slate-400" />
+                    <div
+                      className={`w-4 h-7 rounded border flex flex-col justify-between p-0.5 ${
+                        layoutChoice === "alternate"
+                          ? "border-sky-400 bg-sky-500/10"
+                          : "border-slate-600 bg-slate-800"
+                      }`}
+                    >
+                      <div
+                        className={`w-full h-4 rounded ${
+                          layoutChoice === "alternate"
+                            ? "bg-sky-400/30"
+                            : "bg-slate-600"
+                        }`}
+                      />
+                      <div
+                        className={`w-full h-0.5 rounded ${
+                          layoutChoice === "alternate"
+                            ? "bg-sky-400"
+                            : "bg-slate-400"
+                        }`}
+                      />
                     </div>
-                    <div className="w-4 h-7 rounded border border-slate-600 bg-slate-800 flex flex-col justify-between p-0.5">
-                      <div className="w-full h-0.5 rounded bg-slate-400" />
-                      <div className="w-full h-4 rounded bg-slate-600" />
+                    <div
+                      className={`w-4 h-7 rounded border flex flex-col justify-between p-0.5 ${
+                        layoutChoice === "alternate"
+                          ? "border-sky-400 bg-sky-500/10"
+                          : "border-slate-600 bg-slate-800"
+                      }`}
+                    >
+                      <div
+                        className={`w-full h-0.5 rounded ${
+                          layoutChoice === "alternate"
+                            ? "bg-sky-400"
+                            : "bg-slate-400"
+                        }`}
+                      />
+                      <div
+                        className={`w-full h-4 rounded ${
+                          layoutChoice === "alternate"
+                            ? "bg-sky-400/30"
+                            : "bg-slate-600"
+                        }`}
+                      />
                     </div>
                   </div>
 
-                  <span className="text-xs font-medium">
+                  <span className="text-xs font-semibold">
                     Alternate (text top first)
                   </span>
                 </div>
