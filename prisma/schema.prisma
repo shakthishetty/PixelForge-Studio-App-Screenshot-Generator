@@ -1,0 +1,141 @@
+// Prisma Schema for PixelForge Studio
+// Database: Supabase PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model UserProfile {
+  id          String       @id @default(uuid())
+  supabaseUid String       @unique
+  email       String       @unique
+  fullName    String?
+  avatarUrl   String?
+  planTier    String       @default("free") // "free", "pro", "enterprise"
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  projects    Project[]
+  assets      Asset[]
+  exportJobs  ExportJob[]
+
+  @@map("user_profiles")
+}
+
+model Project {
+  id          String          @id @default(uuid())
+  title       String          @default("Untitled Project")
+  description String?
+  thumbnail   String?
+  isPublic    Boolean         @default(false)
+  canvasCount Int             @default(1)
+  settings    Json            @default("{}") // global settings, e.g. platform, activeCanvasId
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  ownerId     String
+  owner       UserProfile     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  document    DesignDocument?
+  canvases    CanvasDocument[]
+  exportJobs  ExportJob[]
+
+  @@index([ownerId])
+  @@map("projects")
+}
+
+model DesignDocument {
+  id          String       @id @default(uuid())
+  projectId   String       @unique
+  version     Int          @default(1)
+  data        Json         // full serializable document payload
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("design_documents")
+}
+
+model CanvasDocument {
+  id          String       @id @default(uuid())
+  projectId   String
+  orderIndex  Int          @default(0)
+  name        String       @default("Canvas 1")
+  width       Int          @default(1080)
+  height      Int          @default(1920)
+  background  Json         // background object: solid, gradient, image, pattern
+  elements    Json         // array of elements (text, mockup, image, shape, badge)
+  settings    Json?        // individual canvas settings
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("canvas_documents")
+}
+
+model Asset {
+  id          String       @id @default(uuid())
+  ownerId     String
+  storagePath String
+  publicUrl   String
+  fileName    String
+  mimeType    String
+  sizeBytes   Int
+  width       Int?
+  height      Int?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  owner       UserProfile  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@map("assets")
+}
+
+model TemplateMetadata {
+  id          String       @id @default(uuid())
+  slug        String       @unique
+  title       String
+  category    String       // "google_play", "app_store", "tablet", "feature_graphic", "social", "saas_mockup"
+  theme       String       // "modern_gradient", "minimal_studio", "dark_tech", etc.
+  description String?
+  tags        String[]
+  previewUrl  String?
+  templateData Json        // document preset json
+  isOfficial  Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([category])
+  @@index([theme])
+  @@map("templates")
+}
+
+model ExportJob {
+  id          String       @id @default(uuid())
+  userId      String?
+  projectId   String?
+  status      String       @default("completed") // "pending", "processing", "completed", "failed"
+  format      String       // "png", "jpeg", "zip"
+  scale       Float        @default(1.0)
+  outputUrl   String?
+  error       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        UserProfile? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  project     Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([projectId])
+  @@map("export_jobs")
+}

@@ -1,0 +1,12 @@
+services:
+  pixelforge-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pixelforge_studio
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    restart: unless-stopped

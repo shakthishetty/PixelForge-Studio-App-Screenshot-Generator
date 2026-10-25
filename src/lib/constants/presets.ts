@@ -1,0 +1,196 @@
+import { CanvasSizePreset } from "@/types/editor";
+
+export const CANVAS_SIZE_PRESETS: CanvasSizePreset[] = [
+  {
+    id: "phone-gp-portrait",
+    name: "Google Play Phone",
+    width: 1080,
+    height: 1920,
+    category: "phone",
+    platform: "google_play",
+    description: "Standard 9:16 portrait screenshot for Google Play Store",
+  },
+  {
+    id: "phone-ios-max",
+    name: "iPhone 16 Pro Max (6.9\")",
+    width: 1290,
+    height: 2796,
+    category: "phone",
+    platform: "app_store",
+    description: "App Store 6.9-inch flagship OLED display resolution",
+  },
+  {
+    id: "phone-ios-standard",
+    name: "iPhone 15 / 14 Pro (6.1\" - 6.7\")",
+    width: 1179,
+    height: 2556,
+    category: "phone",
+    platform: "app_store",
+    description: "App Store Super Retina XDR standard",
+  },
+  {
+    id: "tablet-portrait",
+    name: "Tablet Portrait (10-inch)",
+    width: 1200,
+    height: 1920,
+    category: "tablet",
+    platform: "google_play",
+    description: "Android tablet portrait display",
+  },
+  {
+    id: "tablet-ipad-pro",
+    name: "iPad Pro 12.9\" Portrait",
+    width: 2048,
+    height: 2732,
+    category: "tablet",
+    platform: "app_store",
+    description: "App Store 12.9-inch Liquid Retina XDR",
+  },
+  {
+    id: "tablet-landscape",
+    name: "Tablet Landscape",
+    width: 1920,
+    height: 1200,
+    category: "tablet",
+    platform: "universal",
+    description: "Widescreen tablet presentation",
+  },
+  {
+    id: "feature-graphic",
+    name: "Google Play Feature Graphic",
+    width: 1024,
+    height: 500,
+    category: "feature",
+    platform: "google_play",
+    description: "Required 1024x500 banner for Google Play store listing",
+  },
+  {
+    id: "presentation-fhd",
+    name: "Full HD 1080p Landscape",
+    width: 1920,
+    height: 1080,
+    category: "desktop",
+    platform: "universal",
+    description: "Standard 16:9 presentation & YouTube thumbnail",
+  },
+  {
+    id: "social-square",
+    name: "Square Post (1:1)",
+    width: 1080,
+    height: 1080,
+    category: "social",
+    platform: "social",
+    description: "Instagram, Twitter/X, and LinkedIn feed posts",
+  },
+  {
+    id: "social-portrait",
+    name: "Portrait Social (4:5)",
+    width: 1080,
+    height: 1350,
+    category: "social",
+    platform: "social",
+    description: "Optimal Instagram portrait feed engagement",
+  },
+  {
+    id: "twitter-header",
+    name: "Twitter / X Header",
+    width: 1500,
+    height: 500,
+    category: "social",
+    platform: "social",
+    description: "High impact profile header banner",
+  },
+  {
+    id: "product-hunt-gallery",
+    name: "Product Hunt Gallery",
+    width: 1270,
+    height: 760,
+    category: "feature",
+    platform: "universal",
+    description: "Optimal Product Hunt gallery mockup dimension",
+  },
+];
+
+export const COLOR_PALETTES = [
+  { name: "Deep Space", colors: ["#0f172a", "#1e1b4b", "#312e81"] },
+  { name: "Cyan Aurora", colors: ["#083344", "#0e7490", "#06b6d4"] },
+  { name: "Cosmic Violet", colors: ["#180033", "#4c1d95", "#8b5cf6"] },
+  { name: "Emerald Luxe", colors: ["#022c22", "#065f46", "#10b981"] },
+  { name: "Sunset Blaze", colors: ["#431407", "#c2410c", "#f97316"] },
+  { name: "Cyberpunk Rose", colors: ["#4c0519", "#be123c", "#f43f5e"] },
+  { name: "Midnight Obsidian", colors: ["#090a0f", "#141724", "#212638"] },
+  { name: "Soft Lavender", colors: ["#2e1065", "#581c87", "#c084fc"] },
+];
+
+export const PRESET_GRADIENTS = [
+  {
+    name: "Neon Horizon",
+    stops: [
+      { offset: 0, color: "#0f172a" },
+      { offset: 0.5, color: "#1e1b4b" },
+      { offset: 1, color: "#3b82f6" },
+    ],
+    angle: 135,
+  },
+  {
+    name: "Electric Violet",
+    stops: [
+      { offset: 0, color: "#1e1035" },
+      { offset: 1, color: "#7c3aed" },
+    ],
+    angle: 145,
+  },
+  {
+    name: "Teal Matrix",
+    stops: [
+      { offset: 0, color: "#042f2e" },
+      { offset: 1, color: "#14b8a6" },
+    ],
+    angle: 120,
+  },
+  {
+    name: "Sunset Fusion",
+    stops: [
+      { offset: 0, color: "#31102f" },
+      { offset: 0.5, color: "#831843" },
+      { offset: 1, color: "#f97316" },
+    ],
+    angle: 135,
+  },
+  {
+    name: "Dark Tech Mesh",
+    stops: [
+      { offset: 0, color: "#090a0f" },
+      { offset: 0.6, color: "#141724" },
+      { offset: 1, color: "#1e243a" },
+    ],
+    angle: 180,
+  },
+  {
+    name: "Emerald Glow",
+    stops: [
+      { offset: 0, color: "#022c22" },
+      { offset: 0.5, color: "#064e3b" },
+      { offset: 1, color: "#059669" },
+    ],
+    angle: 150,
+  },
+  {
+    name: "Titanium Silver",
+    stops: [
+      { offset: 0, color: "#18181b" },
+      { offset: 0.5, color: "#27272a" },
+      { offset: 1, color: "#52525b" },
+    ],
+    angle: 135,
+  },
+  {
+    name: "Solar Ember",
+    stops: [
+      { offset: 0, color: "#1c1917" },
+      { offset: 0.5, color: "#78350f" },
+      { offset: 1, color: "#d97706" },
+    ],
+    angle: 120,
+  },
+];
