@@ -13,8 +13,10 @@ import {
   Plus,
   Search,
   Check,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "@/stores/toast-store";
+import { applyUserContentToCanvases } from "@/lib/utils/template-content-replacer";
 
 type CategoryFilter =
   | "all"
@@ -53,6 +55,8 @@ export const ProjectsPanel: React.FC = () => {
   const deleteSavedProject = useEditorStore((s) => s.deleteSavedProject);
   const importProjectJson = useEditorStore((s) => s.importProjectJson);
   const loadProjectDocument = useEditorStore((s) => s.loadProjectDocument);
+  const userImportedContent = useEditorStore((s) => s.userImportedContent);
+  const clearUserImportedContent = useEditorStore((s) => s.clearUserImportedContent);
 
   useEffect(() => {
     refreshSavedProjects();
@@ -169,7 +173,7 @@ export const ProjectsPanel: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search 30 templates..."
+              placeholder="Search 40 templates..."
               className="w-full pl-8 pr-3 py-1.5 bg-[#111420] border border-[#212738] focus:border-sky-500 rounded-xl text-xs text-slate-200 placeholder:text-slate-500 outline-none"
             />
           </div>
@@ -191,6 +195,29 @@ export const ProjectsPanel: React.FC = () => {
             ))}
           </div>
 
+          {/* User Imported Content Status Banner */}
+          {userImportedContent && userImportedContent.length > 0 && (
+            <div className="flex items-center justify-between p-2 rounded-xl bg-gradient-to-r from-sky-950/70 via-[#101c36] to-indigo-950/50 border border-sky-500/40 shadow-sm animate-in fade-in duration-200">
+              <div className="flex items-center gap-2 text-xs text-sky-200">
+                <Sparkles className="w-3.5 h-3.5 text-sky-400 shrink-0 animate-pulse" />
+                <span className="text-[11px] font-medium leading-tight">
+                  Your screenshots & copy are active across all 40 templates
+                </span>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearUserImportedContent();
+                  toast.info("Reset to default template screenshots");
+                }}
+                title="Reset to original template screenshots"
+                className="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 transition shrink-0 ml-1.5"
+              >
+                Reset
+              </button>
+            </div>
+          )}
+
           {/* Template Cards Stack */}
           <div className="flex-1 overflow-y-auto pr-1 space-y-3">
             {filteredTemplates.map((template) => {
@@ -201,16 +228,28 @@ export const ProjectsPanel: React.FC = () => {
                       .join(", ")
                   : null;
 
+              const previewCanvases =
+                userImportedContent && userImportedContent.length > 0
+                  ? applyUserContentToCanvases(template.canvases, userImportedContent)
+                  : template.canvases;
+
               return (
                 <div
                   key={template.id}
-                  onClick={() => loadTemplate(template.id, keepContent)}
+                  onClick={() => {
+                    loadTemplate(template.id, keepContent);
+                    if (userImportedContent && userImportedContent.length > 0) {
+                      toast.success(
+                        `Loaded "${template.title}" with your screenshots & copy!`
+                      );
+                    }
+                  }}
                   className="group p-2.5 rounded-2xl bg-[#111420] border border-[#212738] hover:border-[#0ea5e9]/70 cursor-pointer transition-all shadow-md"
                 >
                   {/* Miniature multi-canvas preview row (Matches Screenshot 3) */}
                   <div className="w-full h-32 rounded-xl p-1 mb-2.5 flex items-center justify-center gap-1.5 overflow-hidden bg-[#090b12] border border-[#1d2334]">
                     {/* Canvases thumbnails */}
-                    {template.canvases.slice(0, 4).map((c, idx) => {
+                    {previewCanvases.slice(0, 4).map((c, idx) => {
                       const headlineEl = c.elements.find((el) => el.type === "text") as any;
                       const headline = headlineEl ? headlineEl.text.split("\n")[0] : `Screen ${idx + 1}`;
 

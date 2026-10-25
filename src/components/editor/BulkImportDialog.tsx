@@ -423,9 +423,16 @@ export const BulkImportDialog: React.FC<BulkImportDialogProps> = ({
       };
     });
 
-    bulkCreateCanvases(newCanvases, preset.platform);
+    const importedContentItems = items.map((it) => ({
+      url: it.url,
+      title: it.title,
+      subtitle: it.subtitle,
+    }));
+    bulkCreateCanvases(newCanvases, preset.platform, importedContentItems);
     onClose();
-    toast.success(`Created ${items.length} coordinated canvases!`);
+    toast.success(
+      `Created ${items.length} canvases & applied your screenshots to all 40 templates!`
+    );
   };
 
   return (

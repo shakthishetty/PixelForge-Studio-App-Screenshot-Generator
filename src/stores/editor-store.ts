@@ -8,6 +8,10 @@ import {
 } from "@/types/editor";
 import { STARTER_TEMPLATES } from "@/templates/definitions";
 import { CANVAS_SIZE_PRESETS } from "@/lib/constants/presets";
+import {
+  UserImportedContentItem,
+  applyUserContentToCanvases,
+} from "@/lib/utils/template-content-replacer";
 
 const MAX_HISTORY = 30;
 
@@ -29,6 +33,11 @@ interface EditorState {
   lastSavedAt: string | null;
   exportModalOpen: boolean;
   savedProjectsList: SavedProjectMeta[];
+
+  // Imported Content from Quick Import (applies across all 40 templates)
+  userImportedContent: UserImportedContentItem[] | null;
+  setUserImportedContent: (items: UserImportedContentItem[]) => void;
+  clearUserImportedContent: () => void;
 
   // Undo / Redo
   past: ProjectDocument[];
@@ -58,7 +67,11 @@ interface EditorState {
   duplicateCanvas: (canvasId: string) => void;
   deleteCanvas: (canvasId: string) => void;
   reorderCanvases: (fromIndex: number, toIndex: number) => void;
-  bulkCreateCanvases: (canvases: CanvasItem[], targetPlatform?: string) => void;
+  bulkCreateCanvases: (
+    canvases: CanvasItem[],
+    targetPlatform?: string,
+    importedContent?: UserImportedContentItem[]
+  ) => void;
   updateCanvasSize: (canvasId: string, width: number, height: number) => void;
   updateAllCanvasesSize: (width: number, height: number) => void;
   updateCanvasBackground: (
@@ -132,6 +145,34 @@ export const useEditorStore = create<EditorState>((set, get) => {
     lastSavedAt: null,
     exportModalOpen: false,
     savedProjectsList: [],
+    userImportedContent: (() => {
+      if (typeof window !== "undefined") {
+        try {
+          const raw = localStorage.getItem("pixelforge_user_imported_content");
+          if (raw) return JSON.parse(raw);
+        } catch (e) {}
+      }
+      return null;
+    })(),
+    setUserImportedContent: (items) => {
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            "pixelforge_user_imported_content",
+            JSON.stringify(items)
+          );
+        }
+      } catch (e) {}
+      set({ userImportedContent: items });
+    },
+    clearUserImportedContent: () => {
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("pixelforge_user_imported_content");
+        }
+      } catch (e) {}
+      set({ userImportedContent: null });
+    },
     past: [],
     future: [],
 
@@ -161,9 +202,13 @@ export const useEditorStore = create<EditorState>((set, get) => {
     loadTemplate: (templateId, keepContent) => {
       const template =
         STARTER_TEMPLATES.find((t) => t.id === templateId) || STARTER_TEMPLATES[0];
-      const clonedCanvases: CanvasItem[] = JSON.parse(JSON.stringify(template.canvases));
+      let clonedCanvases: CanvasItem[] = JSON.parse(JSON.stringify(template.canvases));
 
-      if (keepContent) {
+      const { userImportedContent } = get();
+      if (userImportedContent && userImportedContent.length > 0) {
+        // Automatically replace placeholder titles, subtitles, and mockup screens with imported user assets
+        clonedCanvases = applyUserContentToCanvases(clonedCanvases, userImportedContent);
+      } else if (keepContent) {
         const { project } = get();
         const currentTexts = project.canvases
           .map((c) => c.elements.find((el) => el.type === "text"))
@@ -465,7 +510,11 @@ export const useEditorStore = create<EditorState>((set, get) => {
       recordHistory(updated);
     },
 
-    bulkCreateCanvases: (newCanvases, targetPlatform = "google_play") => {
+    bulkCreateCanvases: (
+      newCanvases,
+      targetPlatform = "google_play",
+      importedContent
+    ) => {
       const { project } = get();
       const updated = {
         ...project,
@@ -475,7 +524,24 @@ export const useEditorStore = create<EditorState>((set, get) => {
         updatedAt: new Date().toISOString(),
       };
       recordHistory(updated);
-      set({ selectedElementId: null, isDirty: true });
+
+      if (importedContent && importedContent.length > 0) {
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              "pixelforge_user_imported_content",
+              JSON.stringify(importedContent)
+            );
+          }
+        } catch (e) {}
+        set({
+          userImportedContent: importedContent,
+          selectedElementId: null,
+          isDirty: true,
+        });
+      } else {
+        set({ selectedElementId: null, isDirty: true });
+      }
     },
 
     updateCanvasSize: (canvasId, width, height) => {
