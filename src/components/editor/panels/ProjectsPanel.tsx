@@ -304,6 +304,7 @@ export const ProjectsPanel: React.FC = () => {
                     {previewCanvases.slice(0, 4).map((c, idx) => {
                       const headlineEl = c.elements.find((el) => el.type === "text") as any;
                       const headline = headlineEl ? headlineEl.text.split("\n")[0] : `Screen ${idx + 1}`;
+                      const isBottomHeadline = Boolean(headlineEl && headlineEl.y > 1200);
 
                       const isBadge = (el: any) =>
                         el.type === "badge" ||
@@ -319,14 +320,33 @@ export const ProjectsPanel: React.FC = () => {
                             el.name?.toLowerCase().includes("award")));
 
                       const badgeEl = c.elements.find(isBadge) as any;
+                      const photoBackdrop = c.elements.find(
+                        (el) => el.type === "image" && el.width >= 1000 && !isBadge(el)
+                      ) as any;
+
                       const mockups = c.elements.filter(
-                        (el) => el.type === "mockup" || (el.type === "image" && !isBadge(el))
+                        (el) => el.type === "mockup" || (el.type === "image" && !isBadge(el) && el.id !== photoBackdrop?.id)
                       ) as any[];
 
-                      const cBgGradient =
-                        c.background?.type === "gradient" && c.background.gradient?.stops
-                          ? `linear-gradient(180deg, ${c.background.gradient.stops.map((s) => s.color).join(", ")})`
-                          : c.background?.color || "#0f172a";
+                      const cBgGradient = photoBackdrop?.url
+                        ? `url("${photoBackdrop.url}") center/cover no-repeat`
+                        : c.background?.type === "gradient" && c.background.gradient?.stops
+                        ? `linear-gradient(180deg, ${c.background.gradient.stops.map((s) => s.color).join(", ")})`
+                        : c.background?.color || "#0f172a";
+
+                      const headlineColor = headlineEl?.fill || "#ffffff";
+                      const headlineAlign = headlineEl?.align === "left" ? "text-left" : headlineEl?.align === "right" ? "text-right" : "text-center";
+
+                      const primaryMockup = mockups[0];
+                      const isShiftedRight = primaryMockup && primaryMockup.x > 300;
+                      const isShiftedLeft = primaryMockup && primaryMockup.x < 120;
+                      const mockRotation = primaryMockup?.rotation
+                        ? primaryMockup.rotation > 2
+                          ? "rotate-2"
+                          : primaryMockup.rotation < -2
+                          ? "-rotate-2"
+                          : ""
+                        : "";
 
                       return (
                         <div
@@ -334,13 +354,18 @@ export const ProjectsPanel: React.FC = () => {
                           className="h-full flex-1 rounded-lg border border-white/15 shadow-sm flex flex-col justify-between overflow-hidden relative"
                           style={{ background: cBgGradient }}
                         >
-                          {/* Headline at top */}
-                          <div className="text-[6.5px] font-bold leading-tight truncate text-center text-white px-1 pt-1 z-10 drop-shadow">
-                            {headline}
-                          </div>
+                          {/* Headline at top (if not inverted) */}
+                          {!isBottomHeadline && (
+                            <div
+                              className={`text-[6.5px] font-bold leading-tight truncate px-1 pt-1 z-10 drop-shadow ${headlineAlign}`}
+                              style={{ color: headlineColor }}
+                            >
+                              {headline}
+                            </div>
+                          )}
 
-                          {/* Badge if present */}
-                          {badgeEl?.url && (
+                          {/* Badge if present at top */}
+                          {badgeEl?.url && !isBottomHeadline && (
                             <div className="h-3 w-full flex items-center justify-center px-1 z-10 shrink-0">
                               <img src={badgeEl.url} alt="Badge" className="max-h-full max-w-full object-contain" />
                             </div>
@@ -348,7 +373,7 @@ export const ProjectsPanel: React.FC = () => {
 
                           {/* Mockup Frame & Screen Image */}
                           {mockups.length >= 2 ? (
-                            <div className="relative w-full flex-1 flex items-end justify-center overflow-hidden pb-0">
+                            <div className={`relative w-full flex-1 flex ${isBottomHeadline ? "items-start pt-1" : "items-end pb-0"} justify-center overflow-hidden`}>
                               {/* Back angled phone */}
                               <div className="absolute left-[4%] bottom-0 w-[64%] h-[82%] -rotate-6 rounded-t-md bg-[#0a0c14] border border-white/20 shadow overflow-hidden opacity-90 z-0">
                                 <img
@@ -368,8 +393,16 @@ export const ProjectsPanel: React.FC = () => {
                               </div>
                             </div>
                           ) : mockups.length === 1 ? (
-                            <div className="relative w-full flex-1 flex items-end justify-center overflow-hidden pb-0">
-                              <div className="w-[80%] h-[90%] rounded-t-md bg-black border-[1px] border-slate-600/90 shadow-md overflow-hidden relative">
+                            <div
+                              className={`relative w-full flex-1 flex ${
+                                isBottomHeadline ? "items-start pt-1" : "items-end pb-0"
+                              } ${
+                                isShiftedRight ? "justify-end pr-0.5" : isShiftedLeft ? "justify-start pl-0.5" : "justify-center"
+                              } overflow-hidden`}
+                            >
+                              <div
+                                className={`w-[80%] h-[92%] ${isBottomHeadline ? "rounded-b-md" : "rounded-t-md"} bg-black border-[1px] border-slate-600/90 shadow-md overflow-hidden relative ${mockRotation}`}
+                              >
                                 <div className="absolute top-0.5 left-1/2 -translate-x-1/2 w-3 h-0.5 bg-black rounded-full z-20" />
                                 <img
                                   src={mockups[0].type === "mockup" ? mockups[0].screenshotUrl : mockups[0].url}
@@ -380,6 +413,16 @@ export const ProjectsPanel: React.FC = () => {
                             </div>
                           ) : (
                             <div className="flex-1" />
+                          )}
+
+                          {/* Inverted Headline at bottom */}
+                          {isBottomHeadline && (
+                            <div
+                              className={`text-[6.5px] font-bold leading-tight truncate px-1 pb-1 z-10 drop-shadow ${headlineAlign}`}
+                              style={{ color: headlineColor }}
+                            >
+                              {headline}
+                            </div>
                           )}
                         </div>
                       );

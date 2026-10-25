@@ -2,7 +2,10 @@
 // Rendered as standalone SVGs and data URIs for crisp, zero-latency, offline rendering
 
 const createSvgDataUrl = (svgContent: string) => {
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svgContent.trim())}`;
+  const sanitized = svgContent
+    .trim()
+    .replace(/&(?!(amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/g, "&amp;");
+  return `data:image/svg+xml;utf8,${encodeURIComponent(sanitized)}`;
 };
 
 export const SAMPLE_SCREENS = {
