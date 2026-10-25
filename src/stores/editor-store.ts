@@ -58,6 +58,7 @@ interface EditorState {
   duplicateCanvas: (canvasId: string) => void;
   deleteCanvas: (canvasId: string) => void;
   reorderCanvases: (fromIndex: number, toIndex: number) => void;
+  bulkCreateCanvases: (canvases: CanvasItem[], targetPlatform?: string) => void;
   updateCanvasSize: (canvasId: string, width: number, height: number) => void;
   updateAllCanvasesSize: (width: number, height: number) => void;
   updateCanvasBackground: (
@@ -462,6 +463,19 @@ export const useEditorStore = create<EditorState>((set, get) => {
 
       const updated = { ...project, canvases };
       recordHistory(updated);
+    },
+
+    bulkCreateCanvases: (newCanvases, targetPlatform = "google_play") => {
+      const { project } = get();
+      const updated = {
+        ...project,
+        canvases: newCanvases,
+        activeCanvasId: newCanvases[0]?.id || "",
+        targetPlatform: targetPlatform as any,
+        updatedAt: new Date().toISOString(),
+      };
+      recordHistory(updated);
+      set({ selectedElementId: null, isDirty: true });
     },
 
     updateCanvasSize: (canvasId, width, height) => {

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { CANVAS_SIZE_PRESETS } from "@/lib/constants/presets";
 import { toast } from "@/stores/toast-store";
+import { BulkImportDialog } from "./BulkImportDialog";
 
 interface EditorToolbarProps {
   onOpenExport: () => void;
@@ -29,6 +30,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ onOpenExport }) =>
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sizeMenuRef = useRef<HTMLDivElement>(null);
   const [isSizeMenuOpen, setIsSizeMenuOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
   const project = useEditorStore((s) => s.project);
   const undo = useEditorStore((s) => s.undo);
@@ -203,17 +205,10 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ onOpenExport }) =>
         </button>
 
         {/* Quick Import Button */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          onChange={handleQuickImport}
-          className="hidden"
-        />
         <button
-          onClick={() => fileInputRef.current?.click()}
-          title="Quick Import Screenshot"
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#111420] hover:bg-[#191e2e] border border-[#212738] text-xs font-medium text-slate-300 hover:text-white transition"
+          onClick={() => setIsBulkImportOpen(true)}
+          title="Bulk Import Screenshots Wizard"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#111420] hover:bg-[#191e2e] border border-[#212738] text-xs font-medium text-slate-300 hover:text-white transition cursor-pointer"
         >
           <Upload className="w-3.5 h-3.5 text-slate-400" />
           <span className="text-[11px]">Quick Import</span>
@@ -370,6 +365,12 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ onOpenExport }) =>
           {!isLoggingIn && <span className="text-[10px]">›</span>}
         </button>
       </div>
+
+      {/* Bulk Import Modal */}
+      <BulkImportDialog
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+      />
     </header>
   );
 };
