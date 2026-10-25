@@ -46,6 +46,9 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ onOpenExport }) =>
   const [isSaving, setIsSaving] = useState(false);
   const [isLocalising, setIsLocalising] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const userImportedContent = useEditorStore((s) => s.userImportedContent);
+  const templatePreviewMode = useEditorStore((s) => s.templatePreviewMode);
+  const setTemplatePreviewMode = useEditorStore((s) => s.setTemplatePreviewMode);
 
   const handleSave = () => {
     if (isSaving) return;
@@ -213,6 +216,43 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ onOpenExport }) =>
           <Upload className="w-3.5 h-3.5 text-slate-400" />
           <span className="text-[11px]">Quick Import</span>
         </button>
+
+        {/* View Defaults / View My Screenshots Toggle */}
+        {userImportedContent && userImportedContent.length > 0 && (
+          <button
+            onClick={() => {
+              if (templatePreviewMode === "user_content") {
+                setTemplatePreviewMode("defaults");
+                toast.info("Showing default template screenshots. Click any template to view its default!");
+              } else {
+                setTemplatePreviewMode("user_content");
+                toast.info("Showing your imported screenshots on all templates!");
+              }
+            }}
+            title={
+              templatePreviewMode === "user_content"
+                ? "Switch all templates to original default artwork"
+                : "Switch all templates to your imported screenshots"
+            }
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition cursor-pointer ${
+              templatePreviewMode === "user_content"
+                ? "bg-[#101b30] hover:bg-[#162544] border-sky-500/50 text-sky-300"
+                : "bg-[#161a26] hover:bg-[#1f2538] border-slate-700 text-slate-300 hover:text-white"
+            }`}
+          >
+            {templatePreviewMode === "user_content" ? (
+              <>
+                <Layers className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-[11px]">View Defaults</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                <span className="text-[11px]">View My Screenshots</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Right Region */}

@@ -36,8 +36,11 @@ interface EditorState {
 
   // Imported Content from Quick Import (applies across all 40 templates)
   userImportedContent: UserImportedContentItem[] | null;
+  templatePreviewMode: "user_content" | "defaults";
+  setTemplatePreviewMode: (mode: "user_content" | "defaults") => void;
   setUserImportedContent: (items: UserImportedContentItem[]) => void;
   clearUserImportedContent: () => void;
+  resetWorkspaceToDefaultTemplate: () => void;
 
   // Undo / Redo
   past: ProjectDocument[];
@@ -154,6 +157,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
       }
       return null;
     })(),
+    templatePreviewMode: "user_content",
+    setTemplatePreviewMode: (mode) => set({ templatePreviewMode: mode }),
     setUserImportedContent: (items) => {
       try {
         if (typeof window !== "undefined") {
@@ -163,7 +168,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
           );
         }
       } catch (e) {}
-      set({ userImportedContent: items });
+      set({ userImportedContent: items, templatePreviewMode: "user_content" });
     },
     clearUserImportedContent: () => {
       try {
@@ -171,7 +176,22 @@ export const useEditorStore = create<EditorState>((set, get) => {
           localStorage.removeItem("pixelforge_user_imported_content");
         }
       } catch (e) {}
-      set({ userImportedContent: null });
+      set({ userImportedContent: null, templatePreviewMode: "defaults" });
+    },
+    resetWorkspaceToDefaultTemplate: () => {
+      const initialDoc = createInitialProject();
+      recordHistory(initialDoc);
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("pixelforge_user_imported_content");
+        }
+      } catch (e) {}
+      set({
+        userImportedContent: null,
+        templatePreviewMode: "defaults",
+        selectedElementId: null,
+        isDirty: false,
+      });
     },
     past: [],
     future: [],
@@ -204,8 +224,12 @@ export const useEditorStore = create<EditorState>((set, get) => {
         STARTER_TEMPLATES.find((t) => t.id === templateId) || STARTER_TEMPLATES[0];
       let clonedCanvases: CanvasItem[] = JSON.parse(JSON.stringify(template.canvases));
 
-      const { userImportedContent } = get();
-      if (userImportedContent && userImportedContent.length > 0) {
+      const { userImportedContent, templatePreviewMode } = get();
+      if (
+        templatePreviewMode === "user_content" &&
+        userImportedContent &&
+        userImportedContent.length > 0
+      ) {
         // Automatically replace placeholder titles, subtitles, and mockup screens with imported user assets
         clonedCanvases = applyUserContentToCanvases(clonedCanvases, userImportedContent);
       } else if (keepContent) {
@@ -536,6 +560,7 @@ export const useEditorStore = create<EditorState>((set, get) => {
         } catch (e) {}
         set({
           userImportedContent: importedContent,
+          templatePreviewMode: "user_content",
           selectedElementId: null,
           isDirty: true,
         });

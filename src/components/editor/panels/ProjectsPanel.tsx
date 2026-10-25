@@ -14,6 +14,8 @@ import {
   Search,
   Check,
   Sparkles,
+  Layers,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "@/stores/toast-store";
 import { applyUserContentToCanvases } from "@/lib/utils/template-content-replacer";
@@ -57,6 +59,9 @@ export const ProjectsPanel: React.FC = () => {
   const loadProjectDocument = useEditorStore((s) => s.loadProjectDocument);
   const userImportedContent = useEditorStore((s) => s.userImportedContent);
   const clearUserImportedContent = useEditorStore((s) => s.clearUserImportedContent);
+  const templatePreviewMode = useEditorStore((s) => s.templatePreviewMode);
+  const setTemplatePreviewMode = useEditorStore((s) => s.setTemplatePreviewMode);
+  const resetWorkspaceToDefaultTemplate = useEditorStore((s) => s.resetWorkspaceToDefaultTemplate);
 
   useEffect(() => {
     refreshSavedProjects();
@@ -195,26 +200,63 @@ export const ProjectsPanel: React.FC = () => {
             ))}
           </div>
 
-          {/* User Imported Content Status Banner */}
+          {/* View Mode Switcher: My Screenshots vs Default Templates */}
           {userImportedContent && userImportedContent.length > 0 && (
-            <div className="flex items-center justify-between p-2 rounded-xl bg-gradient-to-r from-sky-950/70 via-[#101c36] to-indigo-950/50 border border-sky-500/40 shadow-sm animate-in fade-in duration-200">
-              <div className="flex items-center gap-2 text-xs text-sky-200">
-                <Sparkles className="w-3.5 h-3.5 text-sky-400 shrink-0 animate-pulse" />
-                <span className="text-[11px] font-medium leading-tight">
-                  Your screenshots & copy are active across all 40 templates
-                </span>
+            <div className="flex flex-col gap-2 p-2.5 rounded-xl bg-gradient-to-r from-sky-950/70 via-[#101c36] to-indigo-950/50 border border-sky-500/40 shadow-sm animate-in fade-in duration-200">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 text-sky-200">
+                  <Sparkles className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                  <span className="text-[11px] font-semibold">
+                    {templatePreviewMode === "user_content"
+                      ? "Custom Screenshots Active"
+                      : "Default Templates Active"}
+                  </span>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    resetWorkspaceToDefaultTemplate();
+                    toast.success("Workspace and all templates reset to defaults!");
+                  }}
+                  title="Clear imported images and reset workspace to default template"
+                  className="flex items-center gap-1 text-[10px] text-rose-400 hover:text-rose-300 font-medium hover:underline transition"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset to Default</span>
+                </button>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  clearUserImportedContent();
-                  toast.info("Reset to default template screenshots");
-                }}
-                title="Reset to original template screenshots"
-                className="text-[10px] text-slate-400 hover:text-white px-2 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 transition shrink-0 ml-1.5"
-              >
-                Reset
-              </button>
+
+              {/* Segmented control toggle */}
+              <div className="grid grid-cols-2 gap-1 p-0.5 rounded-lg bg-[#0c101a] border border-[#1b2234]">
+                <button
+                  onClick={() => {
+                    setTemplatePreviewMode("user_content");
+                    toast.info("Showing your imported screenshots on all templates");
+                  }}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition ${
+                    templatePreviewMode === "user_content"
+                      ? "bg-[#0ea5e9] text-white shadow-sm"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>My Screenshots</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setTemplatePreviewMode("defaults");
+                    toast.info("Showing original default templates");
+                  }}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-semibold transition ${
+                    templatePreviewMode === "defaults"
+                      ? "bg-slate-700 text-white shadow-sm"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Default Templates</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -229,7 +271,9 @@ export const ProjectsPanel: React.FC = () => {
                   : null;
 
               const previewCanvases =
-                userImportedContent && userImportedContent.length > 0
+                templatePreviewMode === "user_content" &&
+                userImportedContent &&
+                userImportedContent.length > 0
                   ? applyUserContentToCanvases(template.canvases, userImportedContent)
                   : template.canvases;
 
@@ -238,9 +282,17 @@ export const ProjectsPanel: React.FC = () => {
                   key={template.id}
                   onClick={() => {
                     loadTemplate(template.id, keepContent);
-                    if (userImportedContent && userImportedContent.length > 0) {
+                    if (
+                      templatePreviewMode === "user_content" &&
+                      userImportedContent &&
+                      userImportedContent.length > 0
+                    ) {
                       toast.success(
                         `Loaded "${template.title}" with your screenshots & copy!`
+                      );
+                    } else {
+                      toast.success(
+                        `Loaded default template: "${template.title}"`
                       );
                     }
                   }}
